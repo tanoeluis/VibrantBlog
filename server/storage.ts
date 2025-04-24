@@ -1,7 +1,9 @@
 import { users, type User, type InsertUser, posts, type Post, type InsertPost } from "@shared/schema";
-
-// modify the interface with any CRUD methods
-// you might need
+import { eq } from "drizzle-orm";
+import { db } from "./db";
+import session from "express-session";
+import connectPg from "connect-pg-simple";
+import { pool } from "./db";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -14,19 +16,110 @@ export interface IStorage {
   createPost(post: InsertPost): Promise<Post>;
   updatePost(id: number, post: Partial<InsertPost>): Promise<Post | undefined>;
   deletePost(id: number): Promise<boolean>;
+  
+  // Session store for authentication
+  sessionStore: any;
 }
 
+// Database storage implementation
+export class DatabaseStorage implements IStorage {
+  sessionStore: any;
+  
+  constructor() {
+    const PostgresStore = connectPg(session);
+    this.sessionStore = new PostgresStore({ 
+      pool,
+      createTableIfMissing: true 
+    });
+  }
+  
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+  
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+  
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+  
+  async getAllPosts(): Promise<Post[]> {
+    return await db.select().from(posts).orderBy(posts.createdAt);
+  }
+  
+  async getPostById(id: number): Promise<Post | undefined> {
+    const [post] = await db.select().from(posts).where(eq(posts.id, id));
+    return post;
+  }
+  
+  async createPost(post: InsertPost): Promise<Post> {
+    const [newPost] = await db
+      .insert(posts)
+      .values(post)
+      .returning();
+    return newPost;
+  }
+  
+  async updatePost(id: number, updates: Partial<InsertPost>): Promise<Post | undefined> {
+    const [updatedPost] = await db
+      .update(posts)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(posts.id, id))
+      .returning();
+    return updatedPost;
+  }
+  
+  async deletePost(id: number): Promise<boolean> {
+    const result = await db
+      .delete(posts)
+      .where(eq(posts.id, id))
+      .returning({ id: posts.id });
+    return result.length > 0;
+  }
+}
+
+// For backward compatibility
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private blogPosts: Map<number, Post>;
   currentUserId: number;
   currentPostId: number;
+  sessionStore: any;
 
   constructor() {
     this.users = new Map();
     this.blogPosts = new Map();
     this.currentUserId = 1;
     this.currentPostId = 1;
+    
+    // Menggunakan in-memory session store sederhana
+    this.sessionStore = {
+      all: new Map(),
+      get: function(sid: string, cb: (err: any, session: any) => void) {
+        const data = this.all.get(sid);
+        cb(null, data || null);
+      },
+      set: function(sid: string, session: any, cb?: () => void) {
+        this.all.set(sid, session);
+        if (cb) cb();
+      },
+      destroy: function(sid: string, cb?: () => void) {
+        this.all.delete(sid);
+        if (cb) cb();
+      },
+      on: function(event: string, callback: () => void) {
+        // Stub implementation untuk events
+        return this;
+      }
+    };
 
     // Add some initial blog posts
     this.createPost({
@@ -125,8 +218,14 @@ export class MemStorage implements IStorage {
     const now = new Date();
     
     const newPost: Post = {
-      ...post,
       id,
+      title: post.title,
+      content: post.content,
+      summary: post.summary,
+      author: post.author,
+      category: post.category,
+      readTime: post.readTime || null,
+      imageUrl: post.imageUrl || null,
       createdAt: now,
       updatedAt: now,
     };
@@ -156,3 +255,5 @@ export class MemStorage implements IStorage {
 }
 
 export const storage = new MemStorage();
+
+

@@ -4,8 +4,11 @@ import { storage } from "./storage";
 import { insertPostSchema } from "@shared/schema";
 import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { setupAuth } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication
+  setupAuth(app);
   // Get all posts
   app.get("/api/posts", async (req, res) => {
     try {
