@@ -32,9 +32,9 @@ export default function Header() {
       <div className="container flex h-16 items-center justify-between py-4">
         <div className="flex items-center gap-2">
           <Link href="/">
-            <a className="flex items-center gap-2">
+            <div className="flex items-center gap-2 cursor-pointer">
               <span className="text-2xl font-bold">BlogApp</span>
-            </a>
+            </div>
           </Link>
         </div>
         
