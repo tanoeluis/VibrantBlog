@@ -26,20 +26,20 @@ export default function Sidebar() {
       <div className="flex flex-col h-full">
         <div className="p-5 border-b border-gray-200 dark:border-gray-800">
           <Link href="/">
-            <a className="flex items-center">
+            <div className="flex items-center cursor-pointer">
               <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-white font-bold">
                 V
               </div>
               <h1 className="text-xl font-bold ml-2">Vlog</h1>
-            </a>
+            </div>
           </Link>
         </div>
 
         <nav className="flex-1 p-5 space-y-1">
           {navItems.map((item) => (
             <Link key={item.path} href={item.path}>
-              <a
-                className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+              <div
+                className={`flex items-center px-3 py-2 rounded-md text-sm font-medium cursor-pointer ${
                   isActive(item.path)
                     ? "bg-gray-100 dark:bg-gray-800 text-primary"
                     : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -47,7 +47,7 @@ export default function Sidebar() {
               >
                 <item.icon className="h-5 w-5 mr-2" />
                 {item.label}
-              </a>
+              </div>
             </Link>
           ))}
         </nav>

@@ -2,7 +2,7 @@ import { users, type User, type InsertUser, posts, type Post, type InsertPost } 
 import { eq } from "drizzle-orm";
 import { db } from "./db";
 import session from "express-session";
-import connectPg from "connect-pg-simple";
+import createMemoryStore from "memorystore";
 import { pool } from "./db";
 
 export interface IStorage {
@@ -18,18 +18,17 @@ export interface IStorage {
   deletePost(id: number): Promise<boolean>;
   
   // Session store for authentication
-  sessionStore: any;
+  sessionStore: session.Store;
 }
 
 // Database storage implementation
 export class DatabaseStorage implements IStorage {
-  sessionStore: any;
+  sessionStore: session.Store;
   
   constructor() {
-    const PostgresStore = connectPg(session);
-    this.sessionStore = new PostgresStore({ 
-      pool,
-      createTableIfMissing: true 
+    const MemoryStore = createMemoryStore(session);
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
     });
   }
   
@@ -254,6 +253,6 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
 
 
