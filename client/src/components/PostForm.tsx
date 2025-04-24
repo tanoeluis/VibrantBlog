@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertPostSchema } from "@shared/schema";
+import { insertPostSchema } from "@/shared/schema";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
