@@ -1,4 +1,4 @@
-import { Post } from "@shared/schema";
+import { Post } from "@/shared/schema";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
